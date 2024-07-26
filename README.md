@@ -17,6 +17,7 @@ testClient2 <-> testServer2
 С помощью Vagrant развернем тестовый стенд. Топология сети представлена на схеме:
 ![network](network.jpg)
 
+### Настройка VLAN
 Выполним настройку VLAN на хостах **testClient1** и **testServer1** с операционной системой CenttOS 7. Для этого создадим файл _/etc/sysconfig/network-scripts/ifcfg-vlan10_.
 Для сервера **testClient1**:
 ```bash
@@ -34,8 +35,33 @@ systemctl restart NetworkManager
 ```bash
 netplan apply
 ```
-После этого хосты **testClient1** и **testServer1** в _VLAN 10_ должны видеть друг друга и не иметь доступа для серверов из _VLAN 20_.
+После этого хосты **testClient1** и **testServer1** в _VLAN 10_ должны видеть друг друга и не иметь доступа для серверов из _VLAN 20_ и наоборот.
 
 ![ping1](ping1.jpg)
   
 ![ping2](ping2.jpg)
+
+### Настройка Bond
+Создадим Bond интерфейс на сервера **inetRouter**. Для этого создадим файл _/etc/sysconfig/network-scripts/ifcfg-bond0_ со следующими настройками:
+```bash
+DEVICE=bond0
+NAME=bond0
+TYPE=Bond
+BONDING_MASTER=yes
+IPADDR=192.168.255.1
+NETMASK=255.255.255.252
+ONBOOT=yes
+BOOTPROTO=static
+BONDING_OPTS="mode=1 miimon=100 fail_over_mac=1"
+NM_CONTROLLED=yes
+```
+Выбран режим работы _Active-Backup_. Для **centralRouter** необходимо указать IP-адрес 192.168.255.2. Далее нужно добавить интерфейсы _eth1_ и _eth2_ в bond интерфейс. Для этого измпеним файлы ifcfg-eth2 и ifcfg-eth2:
+```bash
+DEVICE=eth1
+ONBOOT=yes
+BOOTPROTO=none
+MASTER=bond0
+SLAVE=yes
+NM_CONTROLLED=yes
+USERCTL=no
+```
