@@ -1,0 +1,100 @@
+---
+- name: Configure VLANs
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Put SELinux in permissive mode, logging actions that would be blocked.
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive
+      when: ansible_os_family == "RedHat"
+
+    - name: Modify CentOS repo configuration
+      template:
+        src: CentOS-Base.repo
+        dest: /etc/yum.repos.d/CentOS-Base.repo
+        owner: root
+        group: root
+        mode: 0644
+      when: ansible_os_family == "RedHat"
+
+    - name: Install packages CentOS
+      yum:
+        name:
+          - nano
+          - traceroute
+          - tcpdump
+          - net-tools
+        state: latest
+        update_cache: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Install packages Ubuntu
+      apt:
+        name:
+          - nano
+          - traceroute
+          - tcpdump
+          - net-tools
+        state: latest
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Configure VLANs CentOS
+      template:
+        src: ifcfg.j2
+        dest: /etc/sysconfig/network-scripts/ifcfg-vlan{{ vlan_id }}
+        owner: root
+        group: root
+        mode: 0644
+      when: "'vlan10' in group_names"
+
+    - name: Configure VLANs Ubuntu
+      template:
+        src: netplan.j2
+        dest: /etc/netplan/50-cloud-init.yaml
+        owner: root
+        group: root
+        mode: 0644
+      when: "'vlan20' in group_names"
+
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted
+      when: "'vlan10' in group_names"
+
+#    - name: Netplan apply
+#      command: netplan apply
+#      when: "'vlan20' in group_names"
+
+    - name: Restart hosts in VLAN 20
+      reboot:
+      when: "'vlan20' in group_names"
+
+
+    - name: Configure bond
+      template:
+        src: ifcfg-bond.j2
+        dest: /etc/sysconfig/network-scripts/ifcfg-bond0
+        owner: root
+        group: root
+        mode: 0644
+      when: "'bond' in group_names"
+
+    - name: Configure interfaces
+      template:
+        src: "{{ item }}"
+        dest: "/etc/sysconfig/network-scripts/{{ item }}"
+        owner: root
+        group: root
+        mode: 0644
+      with_items:
+        - ifcfg-eth1
+        - ifcfg-eth2
+      when: "'bond' in group_names"
+
+    - name: Restart routers
+      reboot:
+      when: "'bond' in group_names"
