@@ -55,7 +55,8 @@ BOOTPROTO=static
 BONDING_OPTS="mode=1 miimon=100 fail_over_mac=1"
 NM_CONTROLLED=yes
 ```
-Выбран режим работы _Active-Backup_. Для **centralRouter** необходимо указать IP-адрес 192.168.255.2. Далее нужно добавить интерфейсы _eth1_ и _eth2_ в bond интерфейс. Для этого измпеним файлы ifcfg-eth2 и ifcfg-eth2:
+Выбран режим работы _Active-Backup_. Для **centralRouter** необходимо указать IP-адрес 192.168.255.2.  
+Далее нужно добавить интерфейсы _eth1_ и _eth2_ в bond интерфейс. Для этого измпеним файлы _ifcfg-eth2_ и _ifcfg-eth2_:
 ```bash
 DEVICE=eth1
 ONBOOT=yes
@@ -64,4 +65,12 @@ MASTER=bond0
 SLAVE=yes
 NM_CONTROLLED=yes
 USERCTL=no
+```
+После перезапуска службы _NetworkManager_ настройки применятся:
+```bash
+systemctl restart NetworkManager
+```
+Проверия работу bond интерфейса. Запустим пинг с **inetRouter** до **centralRouter**, после чего отключим один из физических интерфейсов на **inetRouter**:
+```bash
+ip link set down eth1
 ```
