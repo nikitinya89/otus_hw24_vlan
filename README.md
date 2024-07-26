@@ -14,8 +14,9 @@ testClient2 <-> testServer2
 
 Между centralRouter и inetRouter "пробросить" 2 линка (общая inernal сеть) и объединить их в бонд. Проверить работу c отключением интерфейсов
 ## Выполнение
-С помощью Vagrant развернем тестовый стенд. Топология сети представлена на схеме:
-![network](network.jpg)
+С помощью Vagrant развернем тестовый стенд. Топология сети представлена на схеме:  
+  
+![network](img/network.jpg)
 
 ### Настройка VLAN
 Выполним настройку VLAN на хостах **testClient1** и **testServer1** с операционной системой CenttOS 7. Для этого создадим файл _/etc/sysconfig/network-scripts/ifcfg-vlan10_.
@@ -37,9 +38,10 @@ netplan apply
 ```
 После этого хосты **testClient1** и **testServer1** в _VLAN 10_ должны видеть друг друга и не иметь доступа для серверов из _VLAN 20_ и наоборот.
 
-![ping1](ping1.jpg)
+![ping1](img/ping1.jpg)
   
-![ping2](ping2.jpg)
+![ping2](img/
+ping2.jpg)
 
 ### Настройка Bond
 Создадим Bond интерфейс на сервера **inetRouter**. Для этого создадим файл _/etc/sysconfig/network-scripts/ifcfg-bond0_ со следующими настройками:
