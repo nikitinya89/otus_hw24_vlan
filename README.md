@@ -22,7 +22,19 @@ testClient2 <-> testServer2
 Выполним настройку VLAN на хостах **testClient1** и **testServer1** с операционной системой CenttOS 7. Для этого создадим файл _/etc/sysconfig/network-scripts/ifcfg-vlan10_.
 Для сервера **testClient1**:
 ```bash
-
+VLAN=yes
+TYPE=Vlan
+PHYSDEV=eth1
+VLAN_ID=10
+VLAN_NAME_TYPE=DEV_PLUS_VID_NO_PAD
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+IPADDR=10.10.10.254
+PREFIX=24
+NAME=10
+DEVICE=eth1.10
+ONBOOT=yes
 ```
 Для сервера **testServer1** настройка идентичная, но необходимо изменить IP-адрес. Для применения конфигурации необходимо перезапустить служба _NetworkManager_:
 ```bash
@@ -30,7 +42,19 @@ systemctl restart NetworkManager
 ```
 На хостах **testClient2** и **testServer2** с операционной системой Ubuntu 22.04 необходимо настроить конфигурацию netplan. Для testClient2:
 ```bash
-
+network:
+    ethernets:
+        enp0s3:
+            dhcp4: true
+        enp0s8: {}
+    vlans:
+         vlan20:
+            id: 20
+            link: enp0s8
+            dhcp4: false
+            addresses:
+              - 10.10.10.254/24
+    version: 2
 ```
 Для сервера **testServer1** настройка идентичная, но необходимо изменить IP-адрес. Применим конфигурацию netplan:
 ```bash
@@ -40,8 +64,7 @@ netplan apply
 
 ![ping1](img/ping1.jpg)
   
-![ping2](img/
-ping2.jpg)
+![ping2](img/ping2.jpg)
 
 ### Настройка Bond
 Создадим Bond интерфейс на сервера **inetRouter**. Для этого создадим файл _/etc/sysconfig/network-scripts/ifcfg-bond0_ со следующими настройками:
@@ -76,3 +99,14 @@ systemctl restart NetworkManager
 ```bash
 ip link set down eth1
 ```
+![bond1](img/bond1.jpg)
+
+Как видно, пинг не прервался, а активным интерфейсом стал _eth2_
+![bond2](img/bond2.jpg)  
+
+---
+Для выполнения задания с помощью **ansible** необходимо запустить плэйбук:
+```bash
+ansible-playbook vlan.yml
+```
+---
